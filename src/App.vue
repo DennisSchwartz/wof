@@ -4,12 +4,12 @@
     
     <!-- Display the four lines of the current puzzle -->
     <div 
-      v-for="(line, lineIndex) in puzzleLines" 
+      v-for="(lineArray, lineIndex) in puzzleLines" 
       :key="lineIndex" 
       class="puzzle-line"
     >
       <span 
-        v-for="(char, charIndex) in line" 
+        v-for="(char, charIndex) in lineArray" 
         :key="charIndex" 
         class="puzzle-char"
       >
@@ -29,35 +29,42 @@ export default {
   name: 'App',
   data() {
     return {
-      // Hardcoded puzzles, each with 4 lines
+      // Hardcoded puzzles, each line as a string
       puzzles: {
         1: {
-          line1: [],
-          line2: ['W', 'H', 'E', 'E', 'L', ' ', 'O', 'F'],
-          line3: ['F', 'O', 'R', 'T', 'U', 'N', 'E'],
-          line4: []
+          line1: '',
+          line2: 'WHEEL OF',
+          line3: 'FORTUNE',
+          line4: '',
         },
       },
-
       // Which puzzle is currently in play
       currentPuzzle: 1,
 
-      // Will store boolean arrays marking whether each character is revealed
+      // Stores boolean arrays marking whether each character is revealed
       revealed: [],
 
       // For showing a quick alert message (e.g., WRONG GUESS)
-      message: ''
+      message: '',
     };
   },
   computed: {
-    // A quick way to grab the lines for the current puzzle
+    /** 
+     * Returns an array of 4 arrays: each array is the characters
+     * from line1, line2, line3, line4. 
+     */
     puzzleLines() {
       const puzzle = this.puzzles[this.currentPuzzle];
-      return [puzzle.line1, puzzle.line2, puzzle.line3, puzzle.line4];
+      return [
+        puzzle.line1.split(''),
+        puzzle.line2.split(''),
+        puzzle.line3.split(''),
+        puzzle.line4.split('')
+      ];
     }
   },
   beforeMount() {
-    // Initialize "revealed" array before component is mounted
+    // Initialize "revealed" array before the component is mounted
     this.initializeRevealed();
   },
   mounted() {
@@ -70,7 +77,11 @@ export default {
   methods: {
     initializeRevealed() {
       // Create an array of the same shape as puzzleLines, filled with false
-      this.revealed = this.puzzleLines.map(line => line.map(() => false));
+      // e.g., if line2 is "WHEEL OF" -> ["W", "H", "E", "E", "L", " ", "O", "F"]
+      // then we do a boolean array: [false, false, false, false, false, false, false, false]
+      this.revealed = this.puzzleLines.map(lineArray =>
+        lineArray.map(() => false)
+      );
     },
 
     handleKeyUp(e) {
@@ -88,11 +99,10 @@ export default {
 
       let found = false;
 
-      // Loop over each line and character; if it matches, reveal it
-      this.puzzleLines.forEach((line, lineIndex) => {
-        line.forEach((char, charIndex) => {
+      // Loop over each line and each character; if it matches, reveal it
+      this.puzzleLines.forEach((lineArray, lineIndex) => {
+        lineArray.forEach((char, charIndex) => {
           if (char.toUpperCase() === guess) {
-            // Direct assignment (no $set needed in Vue 3 for reactivity)
             this.revealed[lineIndex][charIndex] = true;
             found = true;
           }
@@ -116,14 +126,14 @@ export default {
     },
 
     revealAll() {
-      // Simply set all positions to revealed = true
-      this.puzzleLines.forEach((line, lineIndex) => {
-        line.forEach((_, charIndex) => {
+      // Set all positions in "revealed" to true
+      this.puzzleLines.forEach((lineArray, lineIndex) => {
+        lineArray.forEach((_, charIndex) => {
           this.revealed[lineIndex][charIndex] = true;
         });
       });
-    }
-  }
+    },
+  },
 };
 </script>
 
