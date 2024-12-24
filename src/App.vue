@@ -8,8 +8,13 @@
     <h3 class="text-center mb-2 text-warning">Runde {{ currentPuzzle }}: {{ category }}</h3>
 
   <!-- Bootstrap alert (conditionally shown) -->
-  <div class="alert alert-danger text-center fade show" v-if="message">{{ message }}</div>
-  <div class="alert alert-info text-center fade show" v-if="guessedAllConsonants">Alle Konsonanten erraten!</div>
+  <div class="row justify-content-center">
+    <div class="col-3">
+      <div class="alert alert-danger text-center fade show" v-if="message">{{ message }}</div>
+      <div class="alert alert-info text-center fade show" v-if="guessedAllConsonants && !isSolved">Alle Konsonanten erraten!</div>
+      <div class="alert alert-success text-center fade show" v-if="isSolved">Erfolgreich gelöst!</div>
+    </div>
+  </div>
   <div class="container col justify-content-center pt-3 pb-4">
     <div 
       v-for="(lineArray, lineIndex) in puzzleLines" 
@@ -36,13 +41,13 @@
     <div class="row justify-content-center">
       <div class="col-auto">
         <!-- Bootstrap button -->
-        <button @click="handleKeyUp({key: 'Ü'})" class="btn btn-outline-primary btn-sm">
+        <button @click="handleKeyUp({key: 'Ü'})" class="btn btn-outline-primary btn-sm m-1">
           Ü
         </button>
-        <button @click="handleKeyUp({key: 'Ä'})" class="btn btn-outline-primary btn-sm">
+        <button @click="handleKeyUp({key: 'Ä'})" class="btn btn-outline-primary btn-sm m-1">
           Ä
         </button>
-        <button @click="handleKeyUp({key: 'Ö'})" class="btn btn-outline-primary btn-sm">
+        <button @click="handleKeyUp({key: 'Ö'})" class="btn btn-outline-primary btn-sm m-1">
           Ö
         </button>
       </div>
@@ -57,7 +62,7 @@
       </div>
       <div class="col-auto">
         <!-- Bootstrap button -->
-        <button @click="initializeRevealed" class="btn btn-outline-primary btn-sm">
+        <button @click="initialize" class="btn btn-outline-primary btn-sm">
           Zurücksetzen
         </button>
       </div>
@@ -67,9 +72,9 @@
 </template>
 
 <script>
-// TODO: Add sounds
-// TODO: Add alerts for no more consonants
 // TODO: Add count for correct guesses
+import correctSound from '@/assets/correct.mp3';
+import wrongSound from '@/assets/wrong2.mp3';
 import puzzlesText from '@/assets/puzzles.txt?raw'; // Import the raw text file
 export default {
   name: 'App',
@@ -93,9 +98,11 @@ export default {
       // Desired line widths in characters
       lineWidths: [12, 14, 14, 12],
 
+      // Array of puzzle objects
       puzzles: puzzles,
+
       // Which puzzle is currently in play
-      currentPuzzle: 2,
+      currentPuzzle: 1,
 
       // Stores boolean arrays marking whether each character is revealed
       revealed: [],
@@ -103,7 +110,6 @@ export default {
       // For showing a quick alert message (e.g., WRONG GUESS)
       message: '',
 
-      guessedAllConsonants: false,
     };
   },
   computed: {
@@ -130,24 +136,37 @@ export default {
     category() {
       return this.puzzles[this.currentPuzzle].category;
     },
-    consonantsLeft() {
+    guessedAllConsonants() {
       // Count the number of consonants that have not been revealed
       let count = 0;
       const vowels = ['A', 'E', 'I', 'O', 'U', 'Ä', 'Ö', 'Ü'];
-      this.puzzleLines.forEach(lineArray => {
-        lineArray.forEach(char => {
-          if (char !== ' ' && !vowels.includes(char.toUpperCase())) {
-            count++;
+      this.revealed.forEach((line, lineIndex) => {
+        line.forEach((char, charIndex) => {
+          const upperChar = this.puzzleLines[lineIndex][charIndex].toUpperCase();
+          if (upperChar !== ' ' && !vowels.includes(upperChar) && !char) {
+              count++;
           }
         });
-      });
-      return count;
+      })
+      return count === 0;
     },
+
+    isSolved() {
+      return this.puzzleLines.every((line, lineIndex) =>
+        line.every((char, charIndex) => {
+          // If it's a space, no need to reveal it.
+          if (char === ' ') return true;
+
+          // Otherwise, check if it's revealed.
+          return this.revealed[lineIndex][charIndex];
+        })
+      );
+  },
     
   },
   beforeMount() {
     // Initialize "revealed" array before component is mounted
-    this.initializeRevealed();
+    this.initialize();
   },
   mounted() {
     // Listen for user key presses anywhere in the window
@@ -174,11 +193,12 @@ export default {
       return ' '.repeat(leftSpaces) + str + ' '.repeat(rightSpaces);
     },
 
-    initializeRevealed() {
+    initialize() {
       // Create an array of the same shape as puzzleLines, filled with false
       this.revealed = this.puzzleLines.map(lineArray =>
         lineArray.map(() => false)
       );
+
     },
 
     handleKeyUp(e) {
@@ -218,6 +238,8 @@ export default {
       });
 
       if (!found) {
+        const audio = new Audio(wrongSound);
+        audio.play();
         this.message = 'Leider Falsch!';
         // Reset message after 2 seconds
         setTimeout(() => {
@@ -225,11 +247,18 @@ export default {
         }, 2000);
       } else {
         // Check if the user has guessed all consonants
-        if (this.consonantsLeft === 0) {
-          setTimeout(() => {
-            this.guessedAllConsonants = true;
-            // Play sound
-          }, 1000);
+        const audio = new Audio(correctSound);
+        audio.play();
+        const letterCount = this.countLetters(guess);
+        this.message = 'Richtig! ' + letterCount + 'x ' + guess;
+        // Reset message after 2 seconds
+        setTimeout(() => {
+          this.message = '';
+        }, 2000);
+
+        if (this.isSolved) {
+          console.log('Solved!');
+          // Play sound
         }
       }
     },
@@ -238,6 +267,18 @@ export default {
       // Automatically reveal spaces or any character that has been set to true
       const char = this.puzzleLines[lineIndex][charIndex];
       return char === ' ' || this.revealed[lineIndex][charIndex];
+    },
+
+    countLetters(letter) {
+      let count = 0;
+      this.puzzleLines.forEach((lineArray) => {
+        lineArray.forEach((char) => {
+          if (char === letter) {
+            count++;
+          }
+        });
+      });
+      return count;
     },
 
     revealAll() {
