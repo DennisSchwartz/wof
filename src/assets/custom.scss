@@ -1,0 +1,29 @@
+// 1) Override Bootstrap variables here:
+$primary: antiquewhite;
+$secondary: #009688;
+$success: #4caf50;
+$info: #00bcd4;
+$warning: #ffc107;
+$danger: #f44336;
+
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  #app {
+    text-align: left;
+    min-height: 100%;
+      /* Full viewport height */
+    min-height: 100%;
+    
+    /* Flexbox layout */
+    display: flex;
+    justify-content: center; /* horizontal center */
+    align-items: center;     /* vertical center */
+  }
+
+// 2) Import Bootstrap:
+@import "bootstrap/scss/bootstrap";

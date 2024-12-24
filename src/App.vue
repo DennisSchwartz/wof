@@ -1,70 +1,152 @@
 <template>
-  <div id="app">
-    <h1>Simple "Wheel of Fortune" Board</h1>
-    
-    <!-- Display the four lines of the current puzzle -->
+  <!-- A container to house the puzzle board -->
+  <div class="container">
+  <div class="col justify-content-center mb-3">
+    <h1 class="text-center mb-2 text-primary">Weihnachtsglücksrad</h1>
+
+    <!-- Display the category (if any) -->
+    <h3 class="text-center mb-2 text-warning">Runde {{ currentPuzzle }}: {{ category }}</h3>
+
+  <!-- Bootstrap alert (conditionally shown) -->
+  <div class="alert alert-danger text-center fade show" v-if="message">{{ message }}</div>
+  <div class="alert alert-info text-center fade show" v-if="guessedAllConsonants">Alle Konsonanten erraten!</div>
+  <div class="container col justify-content-center pt-3 pb-4">
     <div 
       v-for="(lineArray, lineIndex) in puzzleLines" 
       :key="lineIndex" 
-      class="puzzle-line"
+      class="row justify-content-center mb-3"
     >
-      <span 
-        v-for="(char, charIndex) in lineArray" 
-        :key="charIndex" 
-        class="puzzle-char"
-      >
-        {{ isRevealed(lineIndex, charIndex) ? char : '_' }}
-      </span>
+      <!-- We use "col-auto" so it sizes to fit content and is centered via "justify-content-center" -->
+      <div class="col-auto">
+        <!-- d-flex to lay out each character horizontally -->
+        <div class="d-flex">
+            <span 
+            v-for="(char, charIndex) in lineArray" 
+            :key="charIndex" 
+            class="puzzle-char mx-1 text-center"
+            :class="char === ' ' ? 'bg-secondary' : 'bg-primary'"
+          >
+            {{ isRevealed(lineIndex, charIndex) ? char : ' ' }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <div class="row justify-content-center">
+      <div class="col-auto">
+        <!-- Bootstrap button -->
+        <button @click="handleKeyUp({key: 'Ü'})" class="btn btn-outline-primary btn-sm">
+          Ü
+        </button>
+        <button @click="handleKeyUp({key: 'Ä'})" class="btn btn-outline-primary btn-sm">
+          Ä
+        </button>
+        <button @click="handleKeyUp({key: 'Ö'})" class="btn btn-outline-primary btn-sm">
+          Ö
+        </button>
+      </div>
     </div>
 
-    <div class="alert" v-if="message">{{ message }}</div>
-
-    <!-- Reveal the entire puzzle -->
-    <button @click="revealAll">Reveal All</button>
+    <div class="row justify-content-center mt-3">
+      <div class="col-auto">
+        <!-- Bootstrap button -->
+        <button @click="revealAll" class="btn btn-outline-primary btn-sm">
+          Rätsel Lösen
+        </button>
+      </div>
+      <div class="col-auto">
+        <!-- Bootstrap button -->
+        <button @click="initializeRevealed" class="btn btn-outline-primary btn-sm">
+          Zurücksetzen
+        </button>
+      </div>
+    </div>
   </div>
+</div>
 </template>
 
 <script>
+// TODO: Add sounds
+// TODO: Add alerts for no more consonants
+// TODO: Add count for correct guesses
+import puzzlesText from '@/assets/puzzles.txt?raw'; // Import the raw text file
 export default {
   name: 'App',
   data() {
+    const puzzles = {}
+    const puzzlesArray = puzzlesText.split('\n');
+    puzzlesArray.forEach((line, index) => {
+      let [cat, lines] = line.split('|');
+      cat = cat.trim();
+      lines = lines.trim().split('&');
+      puzzles[index + 1] = {
+        category: cat,
+        line1: lines[0],
+        line2: lines[1],
+        line3: lines[2],
+        line4: lines[3],
+      };
+    });
+
     return {
-      // Hardcoded puzzles, each line as a string
-      puzzles: {
-        1: {
-          line1: '',
-          line2: 'WHEEL OF',
-          line3: 'FORTUNE',
-          line4: '',
-        },
-      },
+      // Desired line widths in characters
+      lineWidths: [12, 14, 14, 12],
+
+      puzzles: puzzles,
       // Which puzzle is currently in play
-      currentPuzzle: 1,
+      currentPuzzle: 2,
 
       // Stores boolean arrays marking whether each character is revealed
       revealed: [],
 
       // For showing a quick alert message (e.g., WRONG GUESS)
       message: '',
+
+      guessedAllConsonants: false,
     };
   },
   computed: {
     /** 
      * Returns an array of 4 arrays: each array is the characters
-     * from line1, line2, line3, line4. 
+     * from line1, line2, line3, line4 AFTER being centered and padded 
+     * to the specified width.
      */
     puzzleLines() {
       const puzzle = this.puzzles[this.currentPuzzle];
-      return [
-        puzzle.line1.split(''),
-        puzzle.line2.split(''),
-        puzzle.line3.split(''),
-        puzzle.line4.split('')
+      const lines = [
+        puzzle.line1,
+        puzzle.line2,
+        puzzle.line3,
+        puzzle.line4
       ];
-    }
+
+      return lines.map((line, index) => {
+        const width = this.lineWidths[index];
+        const centered = this.centerText(line, width);
+        return centered.split('');
+      });
+    },
+    category() {
+      return this.puzzles[this.currentPuzzle].category;
+    },
+    consonantsLeft() {
+      // Count the number of consonants that have not been revealed
+      let count = 0;
+      const vowels = ['A', 'E', 'I', 'O', 'U', 'Ä', 'Ö', 'Ü'];
+      this.puzzleLines.forEach(lineArray => {
+        lineArray.forEach(char => {
+          if (char !== ' ' && !vowels.includes(char.toUpperCase())) {
+            count++;
+          }
+        });
+      });
+      return count;
+    },
+    
   },
   beforeMount() {
-    // Initialize "revealed" array before the component is mounted
+    // Initialize "revealed" array before component is mounted
     this.initializeRevealed();
   },
   mounted() {
@@ -75,19 +157,45 @@ export default {
     window.removeEventListener('keyup', this.handleKeyUp);
   },
   methods: {
+    /**
+     * Center-align a string within a given width, padded by spaces.
+     * If the string is longer than the width, slice it to fit.
+     * E.g. centerText("HELLO", 12) => '   HELLO    ' (12 characters total)
+     */
+    centerText(str, width) {
+      if (str.length > width) {
+        // If the puzzle text is longer than the width, we slice it.
+        return str.slice(0, width);
+      }
+      // Calculate padding
+      const totalSpaces = width - str.length;
+      const leftSpaces = Math.floor(totalSpaces / 2);
+      const rightSpaces = totalSpaces - leftSpaces;
+      return ' '.repeat(leftSpaces) + str + ' '.repeat(rightSpaces);
+    },
+
     initializeRevealed() {
       // Create an array of the same shape as puzzleLines, filled with false
-      // e.g., if line2 is "WHEEL OF" -> ["W", "H", "E", "E", "L", " ", "O", "F"]
-      // then we do a boolean array: [false, false, false, false, false, false, false, false]
       this.revealed = this.puzzleLines.map(lineArray =>
         lineArray.map(() => false)
       );
     },
 
     handleKeyUp(e) {
-      // If the user pressed Enter, reveal everything:
+      // If the user pressed Enter, reveal everything
       if (e.key === 'Enter') {
         this.revealAll();
+        return;
+      }
+
+      // If the user pressed the right arrow key, go to the next puzzle
+      if (e.key === 'ArrowRight') {
+        this.movePuzzle('up');
+        return;
+      }
+
+      if (e.key === 'ArrowLeft') {
+        this.movePuzzle('down');
         return;
       }
 
@@ -95,7 +203,7 @@ export default {
       const guess = e.key.toUpperCase();
 
       // Only consider A-Z letters
-      if (!/^[A-Z]$/.test(guess)) return;
+      if (!/^[A-ZÖÄÜ]$/.test(guess)) return;
 
       let found = false;
 
@@ -109,13 +217,20 @@ export default {
         });
       });
 
-      // If we did not find any matches, show WRONG GUESS
       if (!found) {
-        this.message = 'WRONG GUESS';
+        this.message = 'Leider Falsch!';
         // Reset message after 2 seconds
         setTimeout(() => {
           this.message = '';
         }, 2000);
+      } else {
+        // Check if the user has guessed all consonants
+        if (this.consonantsLeft === 0) {
+          setTimeout(() => {
+            this.guessedAllConsonants = true;
+            // Play sound
+          }, 1000);
+        }
       }
     },
 
@@ -133,32 +248,51 @@ export default {
         });
       });
     },
+
+    movePuzzle(direction) {
+      if (direction === 'up') {
+        this.currentPuzzle = this.currentPuzzle % Object.keys(this.puzzles).length + 1;
+      } else {
+        this.currentPuzzle = this.currentPuzzle === 1 ? Object.keys(this.puzzles).length : this.currentPuzzle - 1;
+      }
+      // Increment currentPuzzle, or reset to 1 if it exceeds the number of puzzles
+      this.initializeRevealed();
+    },
+
   },
 };
 </script>
 
 <style scoped>
-#app {
-  max-width: 600px;
-  margin: 0 auto;
-  text-align: center;
+/* Override #app's text alignment to let Bootstrap handle layout */
+
+body {
+    /* If using Vue/Vite and your image is inside "src/assets/" 
+     you can reference it like this (SCSS/CSS): */
+    background-image: url('@/assets/background-starts.png');
+
+    /* Tiling the image across the page */
+    background-repeat: repeat;
+
+    /* Optional: If you want the image to move with scrolling */
+    background-attachment: scroll;
+
+    /* If you don't want any scaling, omit background-size, 
+      or use "auto" to keep original tile size */
+    background-size: auto;
 }
 
-.puzzle-line {
-  margin: 8px 0;
-}
-
+/* We’ll still use puzzle-char for custom background or styling */
 .puzzle-char {
-  display: inline-block;
-  width: 20px;
-  text-align: center;
-  font-size: 1.5em;
-  margin-right: 5px;
-}
-
-.alert {
-  color: red;
-  margin: 10px 0;
+  background-color: antiquewhite;
+  border-radius: 2px;
+  color: black;
+  min-width: 1.4em;
+  min-height: 2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
   font-weight: bold;
 }
 </style>

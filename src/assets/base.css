@@ -61,7 +61,14 @@
 body {
   min-height: 100vh;
   color: var(--color-text);
-  background: var(--color-background);
+  background-image: url('@/assets/background-starts.png');
+  /* Tiling the image across the page */
+  background-repeat: repeat;
+  /* Optional: If you want the image to move with scrolling */
+  background-attachment: scroll;
+  /* If you don't want any scaling, omit background-size, 
+    or use "auto" to keep original tile size */
+  background-size: auto;
   transition:
     color 0.5s,
     background-color 0.5s;
