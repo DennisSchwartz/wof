@@ -1,7 +1,7 @@
 <template>
   <!-- A container to house the puzzle board -->
   <div class="container">
-  <div class="col justify-content-center mb-3">
+  <div class="col justify-content-center">
     <h1 class="text-center mb-2 text-primary">Weihnachtsglücksrad</h1>
 
     <!-- Display the category (if any) -->
@@ -16,11 +16,11 @@
       <div class="alert alert-success text-center" v-if="isSolved">Erfolgreich gelöst!</div>
     </div>
   </div>
-  <div class="container col justify-content-center pt-3 pb-4">
+  <div class="container col justify-content-center pt-2 pb-1">
     <div 
       v-for="(lineArray, lineIndex) in puzzleLines" 
       :key="lineIndex" 
-      class="row justify-content-center mb-3"
+      class="row justify-content-center mb-2"
     >
       <!-- We use "col-auto" so it sizes to fit content and is centered via "justify-content-center" -->
       <div class="col-auto">
@@ -51,21 +51,13 @@
         <button @click="handleKeyUp({key: 'Ö'})" class="btn btn-outline-primary btn-sm m-1">
           Ö
         </button>
-      </div>
-    </div>
-
-    <div class="row justify-content-center mt-3">
-      <div class="col-auto">
-        <!-- Bootstrap button -->
-        <button @click="revealAll" class="btn btn-outline-primary btn-sm">
-          Rätsel Lösen
-        </button>
-      </div>
-      <div class="col-auto">
-        <!-- Bootstrap button -->
-        <button @click="initialize" class="btn btn-outline-primary btn-sm">
-          Zurücksetzen
-        </button>
+      <button @click="initialize" class="btn btn-outline-primary btn-sm m-1">
+        Zurücksetzen
+      </button>
+      <span class="mx-1"></span>
+      <button @click="revealAll" class="btn btn-outline-danger btn-sm m-1">
+        Rätsel Lösen
+      </button>
       </div>
     </div>
   </div>
@@ -349,15 +341,14 @@ body {
 
 /* We’ll still use puzzle-char for custom background or styling */
 .puzzle-char {
-  background-color: antiquewhite;
   border-radius: 2px;
   color: black;
-  min-width: 1.4em;
-  min-height: 2em;
+  min-width: 1.1em;
+  min-height: 1.8em;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6em;
+  font-size: 2.2em;
   font-weight: bold;
 }
 </style>
