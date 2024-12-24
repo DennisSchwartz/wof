@@ -9,10 +9,11 @@
 
   <!-- Bootstrap alert (conditionally shown) -->
   <div class="row justify-content-center">
-    <div class="col-3">
-      <div class="alert alert-danger text-center fade show" v-if="message">{{ message }}</div>
-      <div class="alert alert-info text-center fade show" v-if="guessedAllConsonants && !isSolved">Alle Konsonanten erraten!</div>
-      <div class="alert alert-success text-center fade show" v-if="isSolved">Erfolgreich gelöst!</div>
+    <div class="col-6">
+      <!-- TODO: Make this a toast -->
+      <div class="alert alert-danger text-center" v-if="message">{{ message }}</div>
+      <div class="alert alert-info text-center" v-if="guessedAllConsonants">Alle Konsonanten erraten!</div>
+      <div class="alert alert-success text-center" v-if="isSolved">Erfolgreich gelöst!</div>
     </div>
   </div>
   <div class="container col justify-content-center pt-3 pb-4">
@@ -107,6 +108,8 @@ export default {
       // Stores boolean arrays marking whether each character is revealed
       revealed: [],
 
+      guessed: [],
+
       // For showing a quick alert message (e.g., WRONG GUESS)
       message: '',
 
@@ -148,7 +151,7 @@ export default {
           }
         });
       })
-      return count === 0;
+      return count === 0 && !this.isSolved;
     },
 
     isSolved() {
@@ -161,8 +164,10 @@ export default {
           return this.revealed[lineIndex][charIndex];
         })
       );
-  },
-    
+    },
+    showPlaceholder() {
+      return !this.isSolved && !this.guessedAllConsonants && !this.message;
+    }
   },
   beforeMount() {
     // Initialize "revealed" array before component is mounted
@@ -184,6 +189,7 @@ export default {
     centerText(str, width) {
       if (str.length > width) {
         // If the puzzle text is longer than the width, we slice it.
+        this.message = 'Puzzle text is too long!';
         return str.slice(0, width);
       }
       // Calculate padding
@@ -198,6 +204,7 @@ export default {
       this.revealed = this.puzzleLines.map(lineArray =>
         lineArray.map(() => false)
       );
+      this.guessed = [];
 
     },
 
@@ -225,6 +232,17 @@ export default {
       // Only consider A-Z letters
       if (!/^[A-ZÖÄÜ]$/.test(guess)) return;
 
+      if (this.guessed.includes(guess)) {
+        this.message = `"${guess}" wurde bereits geraten!`;
+        // Reset message after 2 seconds
+        setTimeout(() => {
+          this.message = '';
+        }, 2000);
+        return;
+      }
+
+      this.guessed.push(guess);
+
       let found = false;
 
       // Loop over each line and each character; if it matches, reveal it
@@ -238,17 +256,14 @@ export default {
       });
 
       if (!found) {
-        const audio = new Audio(wrongSound);
-        audio.play();
-        this.message = 'Leider Falsch!';
-        // Reset message after 2 seconds
-        setTimeout(() => {
-          this.message = '';
-        }, 2000);
+        this.playSound('wrong');
+        // this.message = 'Leider Falsch!';
+        // // Reset message after 2 seconds
+        // setTimeout(() => {
+        //   this.message = '';
+        // }, 2000);
       } else {
-        // Check if the user has guessed all consonants
-        const audio = new Audio(correctSound);
-        audio.play();
+        this.playSound('correct');
         const letterCount = this.countLetters(guess);
         this.message = 'Richtig! ' + letterCount + 'x ' + guess;
         // Reset message after 2 seconds
@@ -297,8 +312,17 @@ export default {
         this.currentPuzzle = this.currentPuzzle === 1 ? Object.keys(this.puzzles).length : this.currentPuzzle - 1;
       }
       // Increment currentPuzzle, or reset to 1 if it exceeds the number of puzzles
-      this.initializeRevealed();
+      this.initialize();
     },
+
+    playSound(name) {
+      let sound = wrongSound
+      if (name === 'correct') {
+        sound = correctSound;
+      }
+      const audio = new Audio(sound);
+      audio.play();
+    }
 
   },
 };
@@ -333,7 +357,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2em;
+  font-size: 1.6em;
   font-weight: bold;
 }
 </style>

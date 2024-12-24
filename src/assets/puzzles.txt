@@ -7,7 +7,7 @@ Familie Nah und Fern | &SHORTER&UNIVERSITY&
 Pforzheimer Sehenswürdigkeiten | &MONTE&SCHERBELINO&
 Oma's Kochkünste | &DAMPFNUDELN&BEIDSEITIG&ANGEBRATEN
 Weihnachten | &FRÖHLICHE&WEIHNACHTEN&
-Familie Nah und Fern | &NIBELUNGENSTRASSE&ACHTZEHN&
+Familie Nah und Fern | &NIBELUNGEN&STRASSE&ACHTZEHN
 Pforzheimer Sehenswürdigkeiten | DER DICKE&AM&LEOPOLDSPLATZ&
 Weihnachten | GLÜHWEIN&AUF DEM&WEIHNACHTS&MARKT
 Familie Nah und Fern | &KÖNIGSBERGER&STRASSE&
@@ -15,7 +15,6 @@ Sprichwörter | ALLE&GUTEN DINGE&SIND&DREI
 Politik | &AMPELAUS&&
 Backen | &PLÄTZCHENDUFT&LIEGT IN DER&LUFT
 Oma's Kochkünste | &HANDGESCHABTE&SPÄTZLE&
-Sprichwörter | WER ANDEREN&EINE GRUBE&GRÄBT FÄLLT&SELBST HINEIN
 Handliche Spiele | SCHERE&STEIN&PAPIER&
 Weihnachten | &BESINNLICHE&FEIERTAGE&
 Sprichwörter | &DER FRÜHE&VOGEL&FÄNGT DEN&WURM
