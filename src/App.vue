@@ -1,21 +1,83 @@
 <template>
   <!-- A container to house the puzzle board -->
   <div class="container">
+    <div 
+      class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" 
+      style="z-index: 9999;" 
+    >
+      <!-- Toast for "message" (e.g. wrong guess or repeating guess) -->
+      <div
+        v-if="message"
+        class="toast align-items-center text-white bg-success border-0 fade show mb-2"
+        role="success"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body">
+            {{ message }}
+          </div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+            @click="message = ''"
+          ></button>
+        </div>
+      </div>
+
+      <!-- Toast for "guessedAllConsonants" -->
+      <div
+        v-if="guessedAllConsonants"
+        class="toast align-items-center text-white bg-info border-0 fade show mb-2"
+        role="info"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body">
+            Alle Konsonanten erraten!
+          </div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+            @click="dismissConsonantsToast"
+          ></button>
+        </div>
+      </div>
+
+      <!-- Toast for "isSolved" -->
+      <div
+        v-if="isSolved"
+        class="toast align-items-center text-white bg-success border-0 fade show"
+        role="success"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body">
+            Erfolgreich gelöst!
+          </div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+            @click="dismissSolvedToast"
+          ></button>
+        </div>
+      </div>
+    </div>
+    <!-- End Toast container -->
   <div class="col justify-content-center">
     <h1 class="text-center mb-2 text-primary">Weihnachtsglücksrad</h1>
 
     <!-- Display the category (if any) -->
     <h3 class="text-center mb-2 text-warning">Runde {{ currentPuzzle }}: {{ category }}</h3>
 
-  <!-- Bootstrap alert (conditionally shown) -->
-  <div class="row justify-content-center">
-    <div class="col-6">
-      <!-- TODO: Make this a toast -->
-      <div class="alert alert-danger text-center" v-if="message">{{ message }}</div>
-      <div class="alert alert-info text-center" v-if="guessedAllConsonants">Alle Konsonanten erraten!</div>
-      <div class="alert alert-success text-center" v-if="isSolved">Erfolgreich gelöst!</div>
-    </div>
-  </div>
   <div class="container col justify-content-center pt-2 pb-1">
     <div 
       v-for="(lineArray, lineIndex) in puzzleLines" 
